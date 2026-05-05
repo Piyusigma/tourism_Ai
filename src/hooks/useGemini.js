@@ -24,6 +24,7 @@ export function useGemini() {
   const [result, setResult] = useState(null);
 
   const apiKey = import.meta.env.VITE_GEMINI_KEY;
+  const grokKey = import.meta.env.VITE_GROK_KEY;
   const isKeyMissing = !apiKey || apiKey === 'your_gemini_api_key_here';
 
   const analyzeImage = useCallback(async (file) => {
@@ -40,43 +41,91 @@ export function useGemini() {
       // Compress image
       const { base64, mimeType } = await compressImage(file);
 
-      // Initialize Gemini
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      try {
+        // --- PRIMARY: Try Gemini First ---
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-      // Send request
-      const response = await model.generateContent([
-        SYSTEM_PROMPT,
-        {
-          inlineData: {
-            data: base64,
-            mimeType,
+        const response = await model.generateContent([
+          SYSTEM_PROMPT,
+          {
+            inlineData: {
+              data: base64,
+              mimeType,
+            },
           },
-        },
-      ]);
+        ]);
 
-      const text = response.response.text();
-      const parsed = parseGeminiResponse(text);
+        const text = response.response.text();
+        const parsed = parseGeminiResponse(text);
 
-      if (parsed.success) {
-        setResult(parsed.data);
-      } else {
-        setError(parsed.error);
+        if (parsed.success) {
+          setResult(parsed.data);
+          setLoading(false);
+          return; // Success! Exit early.
+        } else {
+          throw new Error(parsed.error);
+        }
+      } catch (geminiError) {
+        console.warn('Gemini failed, falling back to Grok...', geminiError);
+
+        // --- SECONDARY: Fallback to Grok ---
+        if (!grokKey || grokKey === 'your_grok_key_here') {
+          // If Grok isn't configured, throw the original Gemini error
+          throw geminiError;
+        }
+
+        const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${grokKey}`
+          },
+          body: JSON.stringify({
+            model: "grok-2-vision-1212",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: SYSTEM_PROMPT },
+                  { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } }
+                ]
+              }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        if (!grokResponse.ok) {
+          const errData = await grokResponse.text();
+          throw new Error(`Grok API Error: ${grokResponse.status} - ${errData}`);
+        }
+
+        const grokData = await grokResponse.json();
+        const text = grokData.choices[0].message.content;
+        
+        // Re-use our robust JSON parser
+        const parsed = parseGeminiResponse(text);
+        if (parsed.success) {
+          setResult(parsed.data);
+        } else {
+          setError(parsed.error);
+        }
       }
     } catch (err) {
-      console.error('Gemini API Error:', err);
+      console.error('AI Processing Error:', err);
       const msg = err.message || String(err);
       if (msg.includes('API key')) {
-        setError('Invalid API key. Please check your VITE_GEMINI_KEY in the .env file.');
+        setError('Invalid API key configuration. Please check your .env file.');
       } else if (msg.includes('quota') || msg.includes('429')) {
-        setError('API quota exceeded. Please try again later or check your Google Cloud billing.');
+        setError('API quota exceeded. Please try again later or check your billing.');
       } else {
-        setError(`API Error: ${msg}`);
+        setError(`Processing Error: ${msg}`);
       }
     } finally {
       setLoading(false);
     }
-  }, [apiKey, isKeyMissing]);
+  }, [apiKey, grokKey, isKeyMissing]);
 
   const reset = useCallback(() => {
     setLoading(false);
