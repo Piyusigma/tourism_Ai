@@ -75,14 +75,14 @@ export function useGemini() {
           throw geminiError;
         }
 
-        const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+        const grokResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${grokKey}`
           },
           body: JSON.stringify({
-            model: "grok-2-vision-1212",
+            model: "llama-3.2-90b-vision-preview",
             messages: [
               {
                 role: "user",
