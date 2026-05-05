@@ -107,8 +107,7 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
 
   return (
     <motion.div
-      className="page-wrapper items-center justify-center p-6 relative noise-bg"
-      style={{ background: '#000' }}
+      className="page-wrapper items-center justify-center p-6 relative noise-bg bg-transparent"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

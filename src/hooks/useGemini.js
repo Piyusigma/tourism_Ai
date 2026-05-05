@@ -3,7 +3,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { compressImage } from '../utils/imageUtils';
 import { parseGeminiResponse } from '../utils/parseResponse';
 
-const SYSTEM_PROMPT = `You are a world-class immersive cultural narrator for a tourism app. Analyze the image and respond ONLY in this exact JSON format with no markdown, no backticks, no extra text:
+const SYSTEM_PROMPT = `You are a world-class immersive cultural narrator for a tourism app.
+
+IMPORTANT: First, determine if the image contains a monument, artwork, historical site, or cultural landmark.
+If the image DOES NOT contain any of these, you MUST respond ONLY with exactly this JSON:
+{ "error": "NOT_A_MONUMENT" }
+
+If the image DOES contain a cultural subject, respond ONLY in this exact JSON format with no markdown, no backticks, no extra text:
 {
   "name": "Monument or place name",
   "location": "City, Country",
@@ -60,6 +66,9 @@ export function useGemini() {
         const parsed = parseGeminiResponse(text);
 
         if (parsed.success) {
+          if (parsed.data.error === 'NOT_A_MONUMENT') {
+            throw new Error('NOT_A_MONUMENT');
+          }
           setResult(parsed.data);
           setLoading(false);
           return; // Success! Exit early.
@@ -107,6 +116,9 @@ export function useGemini() {
         // Re-use our robust JSON parser
         const parsed = parseGeminiResponse(text);
         if (parsed.success) {
+          if (parsed.data.error === 'NOT_A_MONUMENT') {
+            throw new Error('NOT_A_MONUMENT');
+          }
           setResult(parsed.data);
         } else {
           setError(parsed.error);
@@ -115,7 +127,9 @@ export function useGemini() {
     } catch (err) {
       console.error('AI Processing Error:', err);
       const msg = err.message || String(err);
-      if (msg.includes('API key')) {
+      if (msg === 'NOT_A_MONUMENT' || msg.includes('NOT_A_MONUMENT')) {
+        setError('Please upload an image of a monument, artwork, or cultural landmark.');
+      } else if (msg.includes('API key')) {
         setError('Invalid API key configuration. Please check your .env file.');
       } else if (msg.includes('quota') || msg.includes('429')) {
         setError('API quota exceeded. Please try again later or check your billing.');

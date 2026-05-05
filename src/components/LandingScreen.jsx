@@ -1,23 +1,29 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Upload, Sparkles } from 'lucide-react';
 
 export default function LandingScreen({ onUpload, onCamera }) {
+  const fullText = "Cultural Lens";
+  const [typedText, setTypedText] = useState("");
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setTypedText(fullText.slice(0, i + 1));
+      i++;
+      if (i === fullText.length) clearInterval(interval);
+    }, 120);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <motion.div
-      className="page-wrapper min-h-[100dvh] flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: '#000' }}
+      className="page-wrapper min-h-[100dvh] flex flex-col items-center justify-center relative overflow-hidden bg-transparent"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Subtle ambient glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] md:w-[1000px] md:h-[800px] pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 65%)',
-        }}
-      />
 
       {/* Main content */}
       <div className="relative z-10 text-center px-6 w-full max-w-3xl mx-auto flex flex-col items-center">
@@ -36,30 +42,29 @@ export default function LandingScreen({ onUpload, onCamera }) {
         </motion.div>
 
         {/* Title */}
-        <motion.h1
-          className="font-bold mb-6 leading-[0.95] text-6xl sm:text-7xl md:text-8xl lg:text-[140px]"
+        <h1
+          className="font-extrabold mb-8 leading-[1.0] text-6xl sm:text-7xl md:text-8xl lg:text-[140px] flex items-center justify-center min-h-[140px]"
           style={{ letterSpacing: '-0.04em' }}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          <span className="text-[var(--text-primary)] block">Cultural</span>
-          <span className="text-[var(--text-tertiary)] block -mt-1 md:-mt-4">Lens.</span>
-        </motion.h1>
+          <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/30 drop-shadow-sm">
+            {typedText}
+          </span>
+          <span className="animate-pulse inline-block w-[2px] md:w-[4px] h-[45px] sm:h-[65px] md:h-[95px] lg:h-[120px] bg-white ml-2 align-baseline shadow-[0_0_15px_rgba(255,255,255,0.8)] rounded-full" />
+        </h1>
 
         {/* Tagline */}
         <motion.p
-          className="text-[var(--text-tertiary)] font-light uppercase mb-6 md:mb-8 text-xs sm:text-sm md:text-base tracking-[0.2em]"
+          className="text-[var(--text-quaternary)] font-semibold uppercase mb-6 md:mb-8 text-[10px] sm:text-xs md:text-sm tracking-[0.4em]"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.6 }}
         >
-          Point. Discover. Experience.
+          Point // Discover // Experience
         </motion.p>
 
         {/* Description */}
         <motion.p
-          className="text-[var(--text-quaternary)] max-w-sm md:max-w-md mx-auto mb-10 text-sm md:text-lg leading-relaxed"
+          className="text-white/60 font-light max-w-sm md:max-w-md mx-auto mb-12 text-sm md:text-lg leading-[1.8]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.6 }}

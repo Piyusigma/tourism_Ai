@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import LandingScreen from './components/LandingScreen';
 import CaptureScreen from './components/CaptureScreen';
 import ExperienceScreen from './components/ExperienceScreen';
+import BackgroundEffects from './components/BackgroundEffects';
 import { useGemini } from './hooks/useGemini';
 import { createPreviewUrl } from './utils/imageUtils';
 import { AlertTriangle, KeyRound, RefreshCw } from 'lucide-react';
@@ -97,7 +98,8 @@ export default function App() {
   }
 
   return (
-    <div className="page-wrapper">
+    <div className="page-wrapper relative">
+      <BackgroundEffects />
       <AnimatePresence mode="wait">
         {screen === 'landing' && (
           <LandingScreen
