@@ -21,13 +21,18 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  // Safely attach the camera stream once the video element is mounted
-  useEffect(() => {
-    if (showCamera && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch(err => console.error('Video play error:', err));
+  // Safely attach the camera stream once the video element mounts
+  const handleVideoRef = useCallback((node) => {
+    if (node) {
+      videoRef.current = node;
+      if (streamRef.current) {
+        node.srcObject = streamRef.current;
+        node.onloadedmetadata = () => {
+          node.play().catch(err => console.error('Video play error:', err));
+        };
+      }
     }
-  }, [showCamera]);
+  }, []);
 
   const handleFile = useCallback((f) => {
     if (f && f.type.startsWith('image/')) {
@@ -147,14 +152,14 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
             /* Camera View */
             <motion.div
               key="camera"
-              className="glass-card p-4"
+              className="glass-card p-8 md:p-10"
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
             >
               <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
                 <video
-                  ref={videoRef}
+                  ref={handleVideoRef}
                   autoPlay
                   playsInline
                   muted
@@ -167,7 +172,7 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
                 <div className="absolute bottom-4 right-4 w-8 h-8 border-b border-r border-white/30 rounded-br-lg" />
               </div>
 
-              <div className="flex justify-center gap-3 mt-4">
+              <div className="flex justify-center gap-6 mt-8">
                 <button
                   id="capture-take-photo-btn"
                   onClick={capturePhoto}
@@ -289,7 +294,7 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
               </div>
 
               {/* Camera button below */}
-              <motion.div className="flex justify-center mt-6">
+              <motion.div className="flex justify-center mt-12">
                 <button
                   id="capture-camera-btn"
                   onClick={startCamera}
