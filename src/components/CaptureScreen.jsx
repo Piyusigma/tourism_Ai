@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
@@ -20,6 +20,14 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+
+  // Safely attach the camera stream once the video element is mounted
+  useEffect(() => {
+    if (showCamera && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(err => console.error('Video play error:', err));
+    }
+  }, [showCamera]);
 
   const handleFile = useCallback((f) => {
     if (f && f.type.startsWith('image/')) {
@@ -58,12 +66,6 @@ export default function CaptureScreen({ onDiscover, onBack, initialFile, loading
       });
       streamRef.current = stream;
       setShowCamera(true);
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-        }
-      }, 100);
     } catch (err) {
       console.error('Camera error:', err);
       alert('Unable to access camera. Please check permissions or try uploading a photo instead.');
